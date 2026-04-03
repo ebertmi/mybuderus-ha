@@ -132,25 +132,42 @@ def get_access_token() -> str:
 
     print("\n🔐 SingleKey ID Login")
     print("=" * 60)
-    print("1. Browser wird geöffnet (oder URL manuell öffnen)")
-    print("2. Einloggen mit deinen SingleKey ID Zugangsdaten")
-    print("3. Nach dem Login versucht der Browser eine URL mit")
-    print('   "com.buderus.tt.dashtt://app/login?code=..." zu öffnen')
-    print("   → Das wird fehlschlagen (kein Handler installiert)")
-    print("4. Kopiere diese vollständige URL und füge sie unten ein")
+    print("SCHRITTE:")
+    print("1. Browser öffnet sich mit der SingleKey ID Login-Seite")
+    print("2. Gib deine SingleKey ID Zugangsdaten ein und klicke 'Anmelden'")
+    print("3. Nach erfolgreichem Login versucht der Browser zu dieser URL")
+    print("   weiterzuleiten (die URL beginnt mit 'com.buderus...'):")
+    print("     com.buderus.tt.dashtt://app/login?code=XXXX...")
+    print("4. Der Browser kann diese URL NICHT öffnen und zeigt einen Fehler")
+    print("   → In Chrome: 'ERR_UNKNOWN_URL_SCHEME' — die URL steht in der Adressleiste")
+    print("   → In Safari: Dialog 'Safari kann die Seite nicht öffnen'")
+    print("5. Kopiere die vollständige URL aus der Adressleiste")
+    print("   (beginnt mit 'com.buderus.tt.dashtt://app/login?code=')")
+    print("")
+    print("WICHTIG: Kopiere NICHT die URL der Login-Seite (singlekey-id.com/...)")
+    print("         Kopiere die URL NACH dem Login (com.buderus.tt.dashtt://...)")
     print("=" * 60)
     webbrowser.open(auth_url)
 
-    redirect_url = input("\nRedirect-URL einfügen: ").strip()
-    parsed = urlparse(redirect_url)
-    params = parse_qs(parsed.query)
+    redirect_url = input("\nRedirect-URL oder nur den Code einfügen: ").strip()
 
-    if "error" in params:
-        raise RuntimeError(f"Auth-Fehler: {params['error'][0]}")
-    if "code" not in params:
-        raise ValueError(f"Kein 'code' in URL gefunden: {redirect_url}")
+    # Akzeptiere entweder die vollständige URL oder nur den Code-String
+    if redirect_url.startswith("com.buderus") or redirect_url.startswith("http"):
+        parsed = urlparse(redirect_url)
+        params = parse_qs(parsed.query)
+        if "error" in params:
+            raise RuntimeError(f"Auth-Fehler: {params['error'][0]}")
+        if "code" not in params:
+            raise ValueError(
+                f"Kein 'code' in URL gefunden.\n"
+                f"Eingabe war: {redirect_url}\n"
+                f"Erwartetes Format: com.buderus.tt.dashtt://app/login?code=XXXX"
+            )
+        code = params["code"][0]
+    else:
+        # Benutzer hat nur den Code eingefügt
+        code = redirect_url
 
-    code = params["code"][0]
     token_data = _exchange_code(code, code_verifier)
     _save(token_data)
     print("✓ Login erfolgreich, Token gecacht.")
