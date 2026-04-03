@@ -46,20 +46,69 @@ Alle Pfade relativ zu: `gateways/{gatewayId}/resource/`
 
 | Datenpunkt | Pfad | Methode |
 |---|---|---|
-| Heizkreis Betriebsart | `heatingCircuits/hc1/operationMode` | GET |
-| Heizkreis Solltemperatur | `heatingCircuits/hc1/currentRoomSetpoint` | GET |
-| Heizkreis Raumtemperatur | `heatingCircuits/hc1/roomtemperature` | GET |
-| Warmwasser Betriebsart | `dhwCircuits/dhw1/operationMode` | GET |
-| Warmwasser Ist-Temperatur | `dhwCircuits/dhw1/currentTemperatureLevel` | GET |
-| System Info | `system/info` | GET |
-| Wärmequellen Info | `heatSources/info` | GET |
-| Außentemperatur | `system/sensors/temperatures/outdoor_t1` | GET |
-| Vorlauftemperatur | `heatSources/actualSupplyTemperature` | GET |
-| Rücklauftemperatur | `heatSources/returnTemperature` | GET |
-| Kompressorstatus | `heatSources/compressor/status` | GET |
-| Zuheizerstatus | `heatSources/Source/eHeater/status` | GET |
-| System Saisonmodus | `system/seasonOptimizer/mode` | GET/PUT |
-| System Saisonmodus (alt) | `system/globalSeasonOptimizer/currentMode` | GET |
+| Heizkreis Betriebsart | `heatingCircuits/hc1/operationMode` | GET | ✓ validiert |
+| Heizkreis Solltemperatur | `heatingCircuits/hc1/currentRoomSetpoint` | GET | ✓ validiert |
+| Heizkreis Raumtemperatur | `heatingCircuits/hc1/roomtemperature` | GET | ✓ validiert (kein Sensor → Sentinel -32768) |
+| Warmwasser Betriebsart | `dhwCircuits/dhw1/operationMode` | GET | ✓ validiert |
+| Warmwasser Solltemperatur (high) | `dhwCircuits/dhw1/temperatureLevels/high` | GET/PUT | ✓ validiert |
+| Warmwasser Solltemperatur (low) | `dhwCircuits/dhw1/temperatureLevels/low` | GET/PUT | ✓ validiert |
+| Außentemperatur | `system/sensors/temperatures/outdoor_t1` | GET | ✓ validiert |
+| Vorlauftemperatur | `heatSources/actualSupplyTemperature` | GET | ✓ validiert |
+| Rücklauftemperatur | `heatSources/returnTemperature` | GET | ✓ validiert |
+| Kompressorstatus | `heatSources/compressor/status` | GET | ✓ validiert |
+| Zuheizerstatus | `heatSources/Source/eHeater/status` | GET | ✓ validiert |
+| System Saisonmodus | `system/seasonOptimizer/mode` | GET/PUT | ✗ null auf diesem Gateway |
+| System Info | `system/info` | GET | ✓ validiert |
+| Wärmequellen Info | `heatSources/info` | GET | ✓ validiert |
+| Warmwasser Ist-Temperatur (APK) | `dhwCircuits/dhw1/currentTemperatureLevel` | GET | ✗ null auf diesem Gateway |
+| Warmwasser Speichertemperatur | `dhwCircuits/dhw1/actualStorageTemperature` | GET | ✗ HTTP 403 |
+| Warmwasser Speichertemperatur (alt) | `dhwCircuits/dhw1/actualDhwTemperature` | GET | ✗ null auf diesem Gateway |
+| System Saisonmodus (alt) | `system/globalSeasonOptimizer/currentMode` | GET | nicht getestet |
+
+## Validierte Response-Schemas (Live-Test HMC310/MX300)
+
+### floatValue (Temperaturen, numerische Werte)
+
+```json
+{
+  "id": "/heatSources/returnTemperature",
+  "type": "floatValue",
+  "writeable": 0,
+  "state": [{"short": 32767.0}, {"open": -32768.0}],
+  "unitOfMeasure": "C",
+  "value": 45.4
+}
+```
+
+**Sentinel-Werte** (im `state`-Array definiert, bedeuten "nicht verfügbar"):
+- `-32768.0` → Sensor offen / nicht angeschlossen
+- `32767.0` → Sensor Kurzschluss
+
+### stringValue (Betriebsart, Status)
+
+```json
+{
+  "id": "/heatSources/compressor/status",
+  "type": "stringValue",
+  "writeable": 0,
+  "value": "dhw",
+  "allowedValues": ["off", "heating", "cooling", "dhw", "pool", "pool_heat", "defrost", "alarm"]
+}
+```
+
+### floatValue (schreibbar, mit min/max)
+
+```json
+{
+  "id": "/dhwCircuits/dhw1/temperatureLevels/high",
+  "type": "floatValue",
+  "writeable": 1,
+  "minValue": 30.0,
+  "unitOfMeasure": "C",
+  "value": 48.0,
+  "maxValue": 48.0
+}
+```
 
 ## Echtzeit-Datenpunkte
 
