@@ -49,13 +49,23 @@ LABELS = {
 
 
 def extract_value(payload) -> str:
-    """Extract display value from API payload."""
+    """Extract display value from API payload.
+
+    floatValue endpoints use sentinel values to indicate sensor errors:
+      -32768.0 = open circuit (sensor not connected)
+       32767.0 = short circuit
+    These are listed in payload['state'] and must be treated as unavailable.
+    """
     if payload is None:
         return "N/A"
     if isinstance(payload, dict):
         for key in ("value", "currentValue", "body"):
             if key in payload:
                 val = payload[key]
+                # Check sentinel values from the 'state' list
+                sentinels = {v for s in payload.get("state", []) for v in s.values()}
+                if val in sentinels:
+                    return "N/A"
                 unit = payload.get("unitOfMeasure", "")
                 return f"{val} {unit}".strip() if unit else str(val)
         return str(payload)
