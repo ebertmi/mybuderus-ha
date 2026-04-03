@@ -19,10 +19,11 @@ RESOURCE_PATHS = [
     # Warmwasser
     "dhwCircuits/dhw1/operationMode",
     "dhwCircuits/dhw1/currentTemperatureLevel",
-    # Speichertemperatur und Sollwert (Pfade noch zu validieren)
-    "dhwCircuits/dhw1/actualStorageTemperature",
+    # Speichersollwerte (validiert)
     "dhwCircuits/dhw1/temperatureLevels/high",
     "dhwCircuits/dhw1/temperatureLevels/low",
+    # Speichertemperatur (Kandidat, noch zu validieren)
+    "dhwCircuits/dhw1/actualDhwTemperature",
     # Echtzeit-Daten (Wärmepumpe)
     "system/sensors/temperatures/outdoor_t1",
     "heatSources/compressor/status",
@@ -41,9 +42,9 @@ LABELS = {
     "heatingCircuits/hc1/roomtemperature":        "Heizkreis Raumtemperatur",
     "dhwCircuits/dhw1/operationMode":             "Warmwasser Betriebsart",
     "dhwCircuits/dhw1/currentTemperatureLevel":   "Warmwasser Ist-Temperatur",
-    "dhwCircuits/dhw1/actualStorageTemperature":  "Warmwasser Speichertemperatur",
-    "dhwCircuits/dhw1/temperatureLevels/high":    "Warmwasser Speichersollwert (high)",
-    "dhwCircuits/dhw1/temperatureLevels/low":     "Warmwasser Speichersollwert (low)",
+    "dhwCircuits/dhw1/temperatureLevels/high":    "Warmwasser Solltemperatur (high)",
+    "dhwCircuits/dhw1/temperatureLevels/low":     "Warmwasser Solltemperatur (low)",
+    "dhwCircuits/dhw1/actualDhwTemperature":      "Warmwasser Speichertemperatur",
     "system/sensors/temperatures/outdoor_t1":    "Außentemperatur",
     "heatSources/compressor/status":              "Kompressorstatus",
     "heatSources/actualSupplyTemperature":        "Vorlauftemperatur",
