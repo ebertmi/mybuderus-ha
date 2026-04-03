@@ -20,10 +20,9 @@ RESOURCE_PATHS = [
     "dhwCircuits/dhw1/operationMode",
     "dhwCircuits/dhw1/temperatureLevels/high",
     "dhwCircuits/dhw1/temperatureLevels/low",
-    # Speichertemperatur-Kandidaten (via Bulk)
-    "dhwCircuits/dhw1/storageTemperature",
-    "dhwCircuits/dhw1/dhwTemperature",
-    "system/sensors/temperatures/dhw_t1",
+    # Speichertemperatur-Kandidaten (via APK wddw2provider)
+    "dhwCircuits/dhw1/sensor/externalTankTemperature",
+    "dhwCircuits/dhw1/currentSetpoint",
     # Echtzeit-Daten (Wärmepumpe)
     "system/sensors/temperatures/outdoor_t1",
     "heatSources/compressor/status",
@@ -43,9 +42,8 @@ LABELS = {
     "dhwCircuits/dhw1/operationMode":             "Warmwasser Betriebsart",
     "dhwCircuits/dhw1/temperatureLevels/high":    "Warmwasser Solltemperatur (high)",
     "dhwCircuits/dhw1/temperatureLevels/low":     "Warmwasser Solltemperatur (low)",
-    "dhwCircuits/dhw1/storageTemperature":        "WW Speichertemperatur (Kandidat)",
-    "dhwCircuits/dhw1/dhwTemperature":            "WW Speichertemperatur (Kandidat 2)",
-    "system/sensors/temperatures/dhw_t1":         "WW Speichertemperatur (Kandidat 3)",
+    "dhwCircuits/dhw1/sensor/externalTankTemperature": "WW Speichertemperatur (wddw2)",
+    "dhwCircuits/dhw1/currentSetpoint":               "WW Sollwert (wddw2)",
     "system/sensors/temperatures/outdoor_t1":    "Außentemperatur",
     "heatSources/compressor/status":              "Kompressorstatus",
     "heatSources/actualSupplyTemperature":        "Vorlauftemperatur",
@@ -118,7 +116,7 @@ def main():
     print("\n=== Direkter GET-Test (Speichertemperatur-Kandidaten) ===")
     for direct_path in [
         "dhwCircuits/dhw1/actualStorageTemperature",
-        "dhwCircuits/dhw1/actualDhwTemperature",
+        "dhwCircuits/dhw1/sensor/externalTankTemperature",
     ]:
         try:
             data = get_resource(token, gateway_id, direct_path)
