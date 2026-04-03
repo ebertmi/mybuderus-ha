@@ -50,6 +50,8 @@ Alle Pfade relativ zu: `gateways/{gatewayId}/resource/`
 | Heizkreis Solltemperatur | `heatingCircuits/hc1/currentRoomSetpoint` | GET | ✓ validiert |
 | Heizkreis Raumtemperatur | `heatingCircuits/hc1/roomtemperature` | GET | ✓ validiert (kein Sensor → Sentinel -32768) |
 | Warmwasser Betriebsart | `dhwCircuits/dhw1/operationMode` | GET | ✓ validiert |
+| Warmwasser Speichertemperatur | `dhwCircuits/dhw1/actualTemp` | GET | ✓ validiert (RRC Provider) |
+| Warmwasser Aktiver Sollwert | `dhwCircuits/dhw1/currentSetpoint` | GET | ✓ validiert (inkl. Legionellenschutz) |
 | Warmwasser Solltemperatur (high) | `dhwCircuits/dhw1/temperatureLevels/high` | GET/PUT | ✓ validiert |
 | Warmwasser Solltemperatur (low) | `dhwCircuits/dhw1/temperatureLevels/low` | GET/PUT | ✓ validiert |
 | Außentemperatur | `system/sensors/temperatures/outdoor_t1` | GET | ✓ validiert |
@@ -60,9 +62,8 @@ Alle Pfade relativ zu: `gateways/{gatewayId}/resource/`
 | System Saisonmodus | `system/seasonOptimizer/mode` | GET/PUT | ✗ null auf diesem Gateway |
 | System Info | `system/info` | GET | ✓ validiert |
 | Wärmequellen Info | `heatSources/info` | GET | ✓ validiert |
-| Warmwasser Ist-Temperatur (APK) | `dhwCircuits/dhw1/currentTemperatureLevel` | GET | ✗ null auf diesem Gateway |
-| Warmwasser Speichertemperatur | `dhwCircuits/dhw1/actualStorageTemperature` | GET | ✗ HTTP 403 |
-| Warmwasser Speichertemperatur (alt) | `dhwCircuits/dhw1/actualDhwTemperature` | GET | ✗ null auf diesem Gateway |
+| Warmwasser Ist-Temperatur (ConnectKey) | `dhwCircuits/dhw1/currentTemperatureLevel` | GET | ✗ null / 403 (ConnectKey-spezifisch, nicht MX300) |
+| Warmwasser Speichertemperatur (alt) | `dhwCircuits/dhw1/actualStorageTemperature` | GET | ✗ HTTP 403 |
 | System Saisonmodus (alt) | `system/globalSeasonOptimizer/currentMode` | GET | nicht getestet |
 
 ## Validierte Response-Schemas (Live-Test HMC310/MX300)
