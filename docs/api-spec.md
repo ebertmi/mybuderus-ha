@@ -104,3 +104,84 @@ Aus `MyHeatPumpMonitoringBulkResource` und `MonitoringValuesBulkResource`:
 - Die PointtService-Klasse (Retrofit-Interface) bestätigt: `heatSources/returnTemperature` ist ein direkter GET-Endpunkt (Zeile 384)
 - `system/sensors/temperatures/outdoor_t1` ist ebenfalls als direkter GET-Endpunkt vorhanden (Zeile 492)
 - Heizkreis-Betriebsart erfolgt über `{circuitId}/operationMode` (z.B. `heatingCircuits/hc1/operationMode`)
+
+## Gateway-Liste
+
+**GET** `https://pointt-api.bosch-thermotechnology.com/pointt-api/api/v1/gateways/`
+
+Quelle: `GatewaysDataSourceImpl.getDevices()` verwendet relative URL `"gateways/"`.
+
+Response-Schema (`PointtDevice`-Objekte, direkte Array-Antwort):
+
+```json
+[
+  {
+    "deviceId": "<string>",
+    "gatewayPassword": "<string>",
+    "userPassword": "<string>",
+    "deviceType": "<string>",
+    "brandId": "<string|null>",
+    "firmwareVersion": "<string|null>",
+    "hardwareVersion": "<string|null>",
+    "productId": "<string|null>",
+    "serialNumber": "<string|null>"
+  }
+]
+```
+
+**Wichtig:** Das Feld `deviceId` ist die Gateway-ID, die als `{gatewayId}` in allen weiteren API-Aufrufen verwendet wird.
+
+## Bulk-Request (RRC/icom)
+
+**POST** `https://pointt-api.bosch-thermotechnology.com/pointt-api/api/v1/bulk`
+
+Quelle: `RrcRemoteDataSourceImpl.postBulk()` verwendet relative URL `"bulk"`.
+
+Request Body (`List<BulkBody>`):
+
+```json
+[
+  {
+    "gatewayId": "<deviceId aus Gateway-Liste>",
+    "resourcePaths": [
+      "/heatingCircuits/hc1/operationMode",
+      "/system/sensors/temperatures/outdoor_t1"
+    ]
+  }
+]
+```
+
+Response (`List<BulkResponse>`):
+
+```json
+[
+  {
+    "gatewayId": "<string>",
+    "resourcePaths": [
+      {
+        "resourcePath": "/heatingCircuits/hc1/operationMode",
+        "serverStatus": 200,
+        "gatewayResponse": {
+          "status": 200,
+          "payload": { "value": "auto" }
+        }
+      },
+      {
+        "resourcePath": "/system/sensors/temperatures/outdoor_t1",
+        "serverStatus": 200,
+        "gatewayResponse": {
+          "status": 200,
+          "payload": { "value": -2.5 }
+        }
+      }
+    ]
+  }
+]
+```
+
+**Hinweise:**
+- `BulkBody` hat die Felder `gatewayId` (String) und `resourcePaths` (List&lt;String&gt;).
+- `BulkResponse` hat die Felder `gatewayId` (String) und `resourcePaths` (List&lt;ResourcePath&gt;).
+- `ResourcePath` hat die Felder `resourcePath` (String), `serverStatus` (Integer), `gatewayResponse` (GatewayResponse).
+- `GatewayResponse` hat die Felder `status` (Integer) und `payload` (BulkPayload — sealed class mit Subtypen wie `StringValue`, `FloatValue`, `IntegerValue`, `RefEnum` usw.).
+- Das `payload`-Objekt ist polymorph: je nach Datenpunkt wird ein anderer Subtyp zurückgegeben. Für einfache Werte (Temperatur, Betriebsart) sind `FloatValue` bzw. `StringValue` / `RefEnum` relevant.
