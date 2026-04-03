@@ -39,3 +39,17 @@
 - **Base URL:** https://pointt-api.bosch-thermotechnology.com/pointt-api/api/v1/
 - **URL-Muster:** gateways/{gatewayId}/resource/{path}
 - **Auth Header:** Authorization: Bearer {access_token}
+
+## Bekannte Endpunkte
+
+Alle Pfade relativ zu: `gateways/{gatewayId}/resource/`
+
+| Datenpunkt | Pfad | Methode |
+|---|---|---|
+| Heizkreis Betriebsart | `heatingCircuits/hc1/operationMode` | GET |
+| Heizkreis Solltemperatur | `heatingCircuits/hc1/currentRoomSetpoint` | GET |
+| Heizkreis Raumtemperatur | `heatingCircuits/hc1/roomtemperature` | GET |
+| Warmwasser Betriebsart | `dhwCircuits/dhw1/operationMode` | GET |
+| Warmwasser Ist-Temperatur | `dhwCircuits/dhw1/currentTemperatureLevel` | GET |
+| System Info | `system/info` | GET |
+| Wärmequellen Info | `heatSources/info` | GET |
