@@ -7,7 +7,7 @@ Verwendung:
   python main.py
 """
 from auth import get_access_token
-from api import get_bulk, get_gateways
+from api import get_bulk, get_gateways, get_resource
 
 # Alle Endpunkte (Pfade relativ zu gateways/{deviceId}/resource/)
 # Quelle: APK-Analyse (docs/api-spec.md)
@@ -20,6 +20,10 @@ RESOURCE_PATHS = [
     "dhwCircuits/dhw1/operationMode",
     "dhwCircuits/dhw1/temperatureLevels/high",
     "dhwCircuits/dhw1/temperatureLevels/low",
+    # Speichertemperatur-Kandidaten (via Bulk)
+    "dhwCircuits/dhw1/storageTemperature",
+    "dhwCircuits/dhw1/dhwTemperature",
+    "system/sensors/temperatures/dhw_t1",
     # Echtzeit-Daten (Wärmepumpe)
     "system/sensors/temperatures/outdoor_t1",
     "heatSources/compressor/status",
@@ -39,6 +43,9 @@ LABELS = {
     "dhwCircuits/dhw1/operationMode":             "Warmwasser Betriebsart",
     "dhwCircuits/dhw1/temperatureLevels/high":    "Warmwasser Solltemperatur (high)",
     "dhwCircuits/dhw1/temperatureLevels/low":     "Warmwasser Solltemperatur (low)",
+    "dhwCircuits/dhw1/storageTemperature":        "WW Speichertemperatur (Kandidat)",
+    "dhwCircuits/dhw1/dhwTemperature":            "WW Speichertemperatur (Kandidat 2)",
+    "system/sensors/temperatures/dhw_t1":         "WW Speichertemperatur (Kandidat 3)",
     "system/sensors/temperatures/outdoor_t1":    "Außentemperatur",
     "heatSources/compressor/status":              "Kompressorstatus",
     "heatSources/actualSupplyTemperature":        "Vorlauftemperatur",
@@ -107,6 +114,17 @@ def main():
         else:
             value = extract_value(payload)
             print(f"  ✓ {label}: {value}")
+
+    print("\n=== Direkter GET-Test (Speichertemperatur-Kandidaten) ===")
+    for direct_path in [
+        "dhwCircuits/dhw1/actualStorageTemperature",
+        "dhwCircuits/dhw1/actualDhwTemperature",
+    ]:
+        try:
+            data = get_resource(token, gateway_id, direct_path)
+            print(f"  ✓ {direct_path}: {data}")
+        except Exception as e:
+            print(f"  ✗ {direct_path}: {e}")
 
     print("\n=== Rohdaten (für api-spec.md) ===")
     for item in results:
