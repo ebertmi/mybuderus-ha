@@ -53,3 +53,54 @@ Alle Pfade relativ zu: `gateways/{gatewayId}/resource/`
 | Warmwasser Ist-Temperatur | `dhwCircuits/dhw1/currentTemperatureLevel` | GET |
 | System Info | `system/info` | GET |
 | Wärmequellen Info | `heatSources/info` | GET |
+| Außentemperatur | `system/sensors/temperatures/outdoor_t1` | GET |
+| Vorlauftemperatur | `heatSources/actualSupplyTemperature` | GET |
+| Rücklauftemperatur | `heatSources/returnTemperature` | GET |
+| Kompressorstatus | `heatSources/compressor/status` | GET |
+| Zuheizerstatus | `heatSources/Source/eHeater/status` | GET |
+| System Saisonmodus | `system/seasonOptimizer/mode` | GET/PUT |
+| System Saisonmodus (alt) | `system/globalSeasonOptimizer/currentMode` | GET |
+
+## Echtzeit-Datenpunkte
+
+Alle Pfade sind REST-Endpunkte relativ zu:
+`https://pointt-api.bosch-thermotechnology.com/pointt-api/api/v1/gateways/{gatewayId}/resource/`
+
+Die Datenpunkte werden über **Standard Pointt REST API (GET)** abgerufen — kein MQTT, kein icom-Bulk.
+Der icom-Bulk-Mechanismus (POST `bulk`) existiert ebenfalls, aber für die nachfolgenden Werte genügt jeweils ein einfacher GET.
+
+| Datenpunkt | Quelle | Pfad |
+|---|---|---|
+| Außentemperatur | REST GET | `system/sensors/temperatures/outdoor_t1` |
+| Kompressorstatus | REST GET | `heatSources/compressor/status` |
+| Vorlauftemperatur | REST GET | `heatSources/actualSupplyTemperature` |
+| Rücklauftemperatur | REST GET | `heatSources/returnTemperature` |
+| Zuheizerstatus | REST GET | `heatSources/Source/eHeater/status` |
+| Systemmodus | REST GET/PUT | `system/seasonOptimizer/mode` |
+
+### Weitere gefundene Monitoring-Pfade (Wärmepumpe)
+
+Aus `MyHeatPumpMonitoringBulkResource` und `MonitoringValuesBulkResource`:
+
+| Datenpunkt | Pfad |
+|---|---|
+| Modulationsgrad Kompressor | `heatSources/actualModulation` |
+| Systemdruck | `heatSources/systemPressure` |
+| Sole-Vorlauf (Erdwärme) | `heatSources/hs1/brineCircuit/collectorOutflowTemp` |
+| Sole-Rücklauf (Erdwärme) | `heatSources/hs1/brineCircuit/collectorInflowTemp` |
+| Gesamtbetriebsstunden | `heatSources/workingTime/totalSystem` |
+| Anzahl Starts | `heatSources/numberOfStarts` |
+| Passive Kühlung Vorlauf | `heatSources/passiveCooling/inflowTemp` |
+| Saisonmodus aktuell | `system/globalSeasonOptimizer/currentMode` |
+
+### Technische Details zum icom-Bulk-Mechanismus
+
+- GET: `gateways/{gatewayId}/resource{resourcePath}` (z.B. `gateways/{id}/resource/heatSources/returnTemperature`)
+- POST `bulk`: Verwendet relative URL `"bulk"` — Basis-URL kommt vom konfigurierten HTTP-Client
+- ConnectKey-Provider und icom-Provider verwenden dasselbe Schema
+
+### Wichtige Hinweise
+
+- Die PointtService-Klasse (Retrofit-Interface) bestätigt: `heatSources/returnTemperature` ist ein direkter GET-Endpunkt (Zeile 384)
+- `system/sensors/temperatures/outdoor_t1` ist ebenfalls als direkter GET-Endpunkt vorhanden (Zeile 492)
+- Heizkreis-Betriebsart erfolgt über `{circuitId}/operationMode` (z.B. `heatingCircuits/hc1/operationMode`)
