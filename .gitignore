@@ -1,6 +1,9 @@
 # Prototype
 prototype/
 
+# Docs
+docs/
+
 # APK decompiler output
 com.buderus.tt.dashtt.apk_Decompiler.com/
 apks/
