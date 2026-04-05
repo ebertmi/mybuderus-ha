@@ -1,7 +1,0 @@
-.env
-*.env
-!config.example.env
-__pycache__/
-*.pyc
-token_cache.json
-.venv/
