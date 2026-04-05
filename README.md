@@ -25,6 +25,17 @@ All sensors are polled via a single bulk request. The default polling interval i
 
 ## Installation
 
+### Option 1: HACS (recommended)
+
+1. In Home Assistant, open **HACS → Integrations**.
+2. Click the three-dot menu (⋮) in the top right and select **Custom repositories**.
+3. Enter the repository URL and set the category to **Integration**, then click **Add**.
+4. Search for **myBuderus** in HACS and click **Download**.
+5. Restart Home Assistant.
+6. Go to **Settings → Integrations → Add Integration** and search for **myBuderus**.
+
+### Option 2: Manual
+
 1. Copy the `custom_components/mybuderus/` folder into your Home Assistant config directory:
 
 ```
