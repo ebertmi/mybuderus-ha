@@ -1,0 +1,23 @@
+# APK decompiler output
+com.buderus.tt.dashtt.apk_Decompiler.com/
+apks/
+*.apk
+*.xapk
+mybuderus app xapk - resources/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# pytest
+.pytest_cache/
+.coverage
+
+# Home Assistant
+.storage/
