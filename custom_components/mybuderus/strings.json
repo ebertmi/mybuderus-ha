@@ -2,41 +2,41 @@
   "config": {
     "step": {
       "user": {
-        "title": "myBuderus Anmeldung",
-        "description": "**Schritt-für-Schritt:**\n\n1. Öffne diesen Link im Browser: [{auth_url}]({auth_url})\n2. Melde dich mit deinen SingleKey ID Zugangsdaten an\n3. Nach dem Login erscheint eine Fehlerseite — das ist normal\n4. Öffne die Entwicklerkonsole (F12) → Netzwerk-Tab\n5. Filtere nach `com.buderus` und kopiere die vollständige URL\n6. Füge die URL oder nur den `code`-Parameter unten ein",
+        "title": "myBuderus Login",
+        "description": "**Step by step:**\n\n1. Open this link in your browser: [{auth_url}]({auth_url})\n2. Log in with your SingleKey ID credentials\n3. After login an error page will appear in the browser — this is expected\n4. Open the developer console (F12) → Network tab\n5. Filter for `com.buderus` and copy the full redirect URL\n6. Paste the URL or just the `code` parameter below",
         "data": {
-          "auth_code": "Redirect-URL oder Code"
+          "auth_code": "Redirect URL or code"
         }
       },
       "config": {
-        "title": "Konfiguration",
+        "title": "Configuration",
         "data": {
-          "name": "Name der Integration",
-          "scan_interval": "Aktualisierungsintervall (Sekunden)"
+          "name": "Integration name",
+          "scan_interval": "Update interval (seconds)"
         }
       },
       "reauth_confirm": {
-        "title": "myBuderus — Erneut anmelden",
-        "description": "Die Anmeldedaten sind abgelaufen.\n\n1. Öffne diesen Link: [{auth_url}]({auth_url})\n2. Melde dich an\n3. Kopiere die Redirect-URL aus den DevTools (Netzwerk-Tab → `com.buderus`)",
+        "title": "myBuderus — Re-authenticate",
+        "description": "Your session has expired.\n\n1. Open this link: [{auth_url}]({auth_url})\n2. Log in\n3. Copy the redirect URL from DevTools (Network tab → `com.buderus`)",
         "data": {
-          "auth_code": "Redirect-URL oder Code"
+          "auth_code": "Redirect URL or code"
         }
       }
     },
     "error": {
-      "invalid_code": "Ungültiger Code oder URL.",
-      "cannot_connect": "Verbindung fehlgeschlagen. Bitte Internetverbindung prüfen."
+      "invalid_code": "Invalid code or URL.",
+      "cannot_connect": "Connection failed. Please check your internet connection."
     },
     "abort": {
-      "reauth_successful": "Anmeldung erfolgreich erneuert."
+      "reauth_successful": "Re-authentication successful."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "myBuderus Einstellungen",
+        "title": "myBuderus Options",
         "data": {
-          "scan_interval": "Aktualisierungsintervall (Sekunden)"
+          "scan_interval": "Update interval (seconds)"
         }
       }
     }
