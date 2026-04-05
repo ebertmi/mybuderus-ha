@@ -6,6 +6,7 @@
   "documentation": "https://github.com/ebertmi/mybuderus-ha",
   "requirements": [],
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": ["@ebertmi"],
+  "issue_tracker": "https://github.com/ebertmi/mybuderus-ha/issues",
   "iot_class": "cloud_polling"
 }
