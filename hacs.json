@@ -1,0 +1,6 @@
+{
+  "name": "myBuderus",
+  "documentation": "https://github.com/ebertmi/mybuderus-ha",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}

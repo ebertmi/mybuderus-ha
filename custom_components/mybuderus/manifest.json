@@ -3,7 +3,7 @@
   "name": "myBuderus",
   "version": "0.1.0",
   "config_flow": true,
-  "documentation": "",
+  "documentation": "https://github.com/ebertmi/mybuderus-ha",
   "requirements": [],
   "dependencies": [],
   "codeowners": [],
