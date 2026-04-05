@@ -2,6 +2,8 @@
 
 Unofficial Home Assistant custom component for Bosch/Buderus heat pumps (HMC310 / MX300 and compatible). Provides 14 read-only sensor entities via the Bosch Pointt API.
 
+![myBuderus sensors in Home Assistant](screenshots/home-assistant-hwr-overview-sensors.png)
+
 ## Sensors
 
 | Entity | Description | Unit |
