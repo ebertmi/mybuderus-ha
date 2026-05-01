@@ -12,7 +12,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import get_bulk
 from .auth import refresh_access_token
-from .const import DOMAIN
+from .const import DOMAIN, OUTAGE_REPAIR_THRESHOLD
+from .repairs import clear_outage_issue, create_outage_issue
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,10 +41,53 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._expires_at: float = entry.data["expires_at"]
         self._gateway_id: str = entry.data["gateway_id"]
 
+        self._last_success_at: float | None = None
+        self._consecutive_failures: int = 0
+        self._outage_issue_active: bool = False
+
+        expires_in_min = max(0, (self._expires_at - time.time()) / 60)
+        _LOGGER.info("Coordinator initialized, token expires in %dm", int(expires_in_min))
+
     @property
     def gateway_id(self) -> str:
         """Return the gateway device ID."""
         return self._gateway_id
+
+    def _format_last_success(self) -> str:
+        """Return human-readable elapsed time since last successful poll."""
+        if self._last_success_at is None:
+            return "never"
+        elapsed = time.time() - self._last_success_at
+        if elapsed < 3600:
+            return f"{int(elapsed / 60)}m ago"
+        if elapsed < 86400:
+            return f"{int(elapsed / 3600)}h {int((elapsed % 3600) / 60)}m ago"
+        days = int(elapsed / 86400)
+        hours = int((elapsed % 86400) / 3600)
+        return f"{days}d {hours}h ago"
+
+    def _classify_http_error(self, err: aiohttp.ClientResponseError) -> str:
+        """Return a descriptive message for an HTTP error status code."""
+        if err.status == 403:
+            return "Permission denied — token may lack required scopes"
+        if err.status == 404:
+            return "Endpoint not found — gateway ID or API URL may be wrong"
+        if err.status == 429:
+            return "Rate limited by API"
+        if err.status >= 500:
+            return f"Server error {err.status} — API may be temporarily unavailable"
+        return f"HTTP error {err.status}"
+
+    def _handle_auth_failure(self) -> None:
+        """Log auth failure and clear any active outage issue."""
+        from datetime import datetime
+        _LOGGER.error(
+            "Auth failure — re-auth required (token expired at %s)",
+            datetime.fromtimestamp(self._expires_at).strftime("%Y-%m-%d %H:%M"),
+        )
+        if self._outage_issue_active:
+            clear_outage_issue(self.hass, self._entry.entry_id)
+            self._outage_issue_active = False
 
     async def _do_token_refresh(self) -> None:
         """Refresh the access token and persist new tokens to config entry."""

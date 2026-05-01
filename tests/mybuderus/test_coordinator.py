@@ -121,3 +121,59 @@ async def test_update_retries_after_401_on_bulk(hass, coordinator):
 @pytest.mark.asyncio
 async def test_gateway_id_property(coordinator):
     assert coordinator.gateway_id == "101739215"
+
+
+def test_initial_health_state(coordinator):
+    """Coordinator starts with no recorded success and zero failures."""
+    assert coordinator._last_success_at is None
+    assert coordinator._consecutive_failures == 0
+    assert coordinator._outage_issue_active is False
+
+
+def test_format_last_success_never(coordinator):
+    coordinator._last_success_at = None
+    assert coordinator._format_last_success() == "never"
+
+
+def test_format_last_success_minutes(coordinator):
+    coordinator._last_success_at = time.time() - 90  # 1m 30s ago
+    result = coordinator._format_last_success()
+    assert "m ago" in result
+    assert "1m ago" in result
+
+
+def test_format_last_success_hours(coordinator):
+    coordinator._last_success_at = time.time() - 7500  # 2h 5m ago
+    result = coordinator._format_last_success()
+    assert "h" in result and "m ago" in result
+
+
+def test_format_last_success_days(coordinator):
+    coordinator._last_success_at = time.time() - (4 * 86400 + 7200)  # 4d 2h ago
+    result = coordinator._format_last_success()
+    assert result.startswith("4d")
+
+
+def test_classify_http_error_403(coordinator):
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=403)
+    assert "Permission denied" in coordinator._classify_http_error(err)
+
+
+def test_classify_http_error_404(coordinator):
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=404)
+    assert "Endpoint not found" in coordinator._classify_http_error(err)
+
+
+def test_classify_http_error_429(coordinator):
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=429)
+    assert "Rate limited" in coordinator._classify_http_error(err)
+
+
+def test_classify_http_error_503(coordinator):
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    assert "Server error 503" in coordinator._classify_http_error(err)
+
+
+def test_classify_http_error_other(coordinator):
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=418)
+    assert "HTTP error 418" in coordinator._classify_http_error(err)
