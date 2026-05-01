@@ -88,6 +88,39 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             clear_outage_issue(self.hass, self._entry.entry_id)
             self._outage_issue_active = False
 
+    def _record_failure(self, error_msg: str) -> None:
+        """Increment failure counter, log, and create outage issue if threshold reached."""
+        self._consecutive_failures += 1
+        if self._consecutive_failures == 1:
+            _LOGGER.warning(
+                "%s (failure %d, last data: %s)",
+                error_msg,
+                self._consecutive_failures,
+                self._format_last_success(),
+            )
+        else:
+            _LOGGER.debug(
+                "%s (failure %d, last data: %s)",
+                error_msg,
+                self._consecutive_failures,
+                self._format_last_success(),
+            )
+
+        if (
+            self._consecutive_failures * self.update_interval.total_seconds()
+            >= OUTAGE_REPAIR_THRESHOLD
+        ):
+            if not self._outage_issue_active:
+                _LOGGER.warning(
+                    "Outage repair issue created — %d consecutive failures, no data since %s",
+                    self._consecutive_failures,
+                    self._format_last_success(),
+                )
+                self._outage_issue_active = True
+            create_outage_issue(
+                self.hass, self._entry.entry_id, self._last_success_at, error_msg
+            )
+
     async def _do_token_refresh(self) -> None:
         """Refresh the access token and persist new tokens to config entry."""
         try:
@@ -101,6 +134,10 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._refresh_token = token_data.get("refresh_token", self._refresh_token)
         self._expires_at = time.time() + token_data.get("expires_in", 3600)
 
+        _LOGGER.info(
+            "Token refreshed successfully, expires in %dm",
+            int(token_data.get("expires_in", 3600) / 60),
+        )
         self.hass.config_entries.async_update_entry(
             self._entry,
             data={
@@ -114,19 +151,55 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from Pointt API."""
         if time.time() > self._expires_at - 60:
-            await self._do_token_refresh()
+            try:
+                await self._do_token_refresh()
+            except ConfigEntryAuthFailed:
+                self._handle_auth_failure()
+                raise
+            except UpdateFailed as err:
+                self._record_failure(f"Token refresh failed: {err}")
+                raise
 
         try:
-            return await get_bulk(self._session, self._access_token, self._gateway_id)
+            result = await get_bulk(self._session, self._access_token, self._gateway_id)
         except aiohttp.ClientResponseError as err:
             if err.status == 401:
-                await self._do_token_refresh()
                 try:
-                    return await get_bulk(
+                    await self._do_token_refresh()
+                except ConfigEntryAuthFailed:
+                    self._handle_auth_failure()
+                    raise
+                try:
+                    result = await get_bulk(
                         self._session, self._access_token, self._gateway_id
                     )
                 except aiohttp.ClientResponseError as retry_err:
+                    self._handle_auth_failure()
                     raise ConfigEntryAuthFailed("Authentication failed") from retry_err
-            raise UpdateFailed(f"API error: {err}") from err
+            else:
+                error_msg = self._classify_http_error(err)
+                self._record_failure(error_msg)
+                raise UpdateFailed(
+                    f"{error_msg} — last data: {self._format_last_success()}"
+                ) from err
         except aiohttp.ClientError as err:
-            raise UpdateFailed(f"Network error: {err}") from err
+            error_msg = f"Network error — could not reach API"
+            self._record_failure(f"{error_msg}: {err}")
+            raise UpdateFailed(
+                f"Network error: {err} — last data: {self._format_last_success()}"
+            ) from err
+
+        # Success path
+        was_failing = self._consecutive_failures > 0
+        prev_failures = self._consecutive_failures
+        self._last_success_at = time.time()
+        self._consecutive_failures = 0
+
+        if was_failing:
+            _LOGGER.info("Recovered after %d consecutive failures", prev_failures)
+        if self._outage_issue_active:
+            _LOGGER.info("Outage repair issue cleared — data successfully retrieved")
+            clear_outage_issue(self.hass, self._entry.entry_id)
+            self._outage_issue_active = False
+        _LOGGER.info("Data retrieved successfully (%d resources)", len(result))
+        return result

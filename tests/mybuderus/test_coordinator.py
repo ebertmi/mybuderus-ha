@@ -177,3 +177,91 @@ def test_classify_http_error_503(coordinator):
 def test_classify_http_error_other(coordinator):
     err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=418)
     assert "HTTP error 418" in coordinator._classify_http_error(err)
+
+
+@pytest.mark.asyncio
+async def test_first_failure_logs_warning(hass, coordinator, caplog):
+    """First consecutive failure logs at WARNING level."""
+    import logging
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=err),
+    ), caplog.at_level(logging.WARNING, logger="custom_components.mybuderus.coordinator"):
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+    assert any("Server error 503" in r.message for r in caplog.records if r.levelno == logging.WARNING)
+
+
+@pytest.mark.asyncio
+async def test_second_failure_logs_debug(hass, coordinator, caplog):
+    """Subsequent failures (after the first) log at DEBUG, not WARNING."""
+    import logging
+    coordinator._consecutive_failures = 1  # simulate prior failure
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=err),
+    ), caplog.at_level(logging.DEBUG, logger="custom_components.mybuderus.coordinator"):
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+    warning_msgs = [r.message for r in caplog.records if r.levelno == logging.WARNING and "Server error" in r.message]
+    assert len(warning_msgs) == 0
+
+
+@pytest.mark.asyncio
+async def test_update_failed_message_includes_last_success(hass, coordinator):
+    """UpdateFailed message includes last success context."""
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=err),
+    ):
+        with pytest.raises(UpdateFailed, match="last data: never"):
+            await coordinator._async_update_data()
+
+
+@pytest.mark.asyncio
+async def test_network_error_logs_warning(hass, coordinator, caplog):
+    """Network errors log at WARNING on first occurrence."""
+    import logging
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=aiohttp.ClientError("DNS failure")),
+    ), caplog.at_level(logging.WARNING, logger="custom_components.mybuderus.coordinator"):
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+    assert any("Network error" in r.message for r in caplog.records if r.levelno == logging.WARNING)
+
+
+@pytest.mark.asyncio
+async def test_outage_issue_created_at_threshold(hass, coordinator):
+    """Outage repair issue is created once the threshold is crossed."""
+    # With scan_interval=300 and threshold=3600: 12 failures crosses threshold
+    coordinator._consecutive_failures = 11  # one more will cross
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=err),
+    ), patch(
+        "custom_components.mybuderus.coordinator.create_outage_issue"
+    ) as mock_create:
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+    mock_create.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_outage_issue_not_created_before_threshold(hass, coordinator):
+    """Outage repair issue is NOT created before threshold is crossed."""
+    coordinator._consecutive_failures = 0  # first failure, well below 3600s
+    err = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=503)
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(side_effect=err),
+    ), patch(
+        "custom_components.mybuderus.coordinator.create_outage_issue"
+    ) as mock_create:
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+    mock_create.assert_not_called()
