@@ -126,7 +126,7 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             token_data = await refresh_access_token(self._session, self._refresh_token)
         except aiohttp.ClientResponseError as err:
-            if err.status == 401:
+            if err.status in (400, 401):
                 raise ConfigEntryAuthFailed("Refresh token expired") from err
             raise UpdateFailed(f"Token refresh failed: {err}") from err
 

@@ -89,6 +89,20 @@ async def test_update_raises_auth_failed_on_refresh_401(hass, coordinator):
 
 
 @pytest.mark.asyncio
+async def test_update_raises_auth_failed_on_refresh_400(hass, coordinator):
+    """400 Bad Request on token endpoint means refresh token is invalid/expired."""
+    coordinator._expires_at = time.time() - 10
+
+    error = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=400)
+    with patch(
+        "custom_components.mybuderus.coordinator.refresh_access_token",
+        new=AsyncMock(side_effect=error),
+    ):
+        with pytest.raises(ConfigEntryAuthFailed):
+            await coordinator._async_update_data()
+
+
+@pytest.mark.asyncio
 async def test_update_raises_update_failed_on_network_error(hass, coordinator):
     with patch(
         "custom_components.mybuderus.coordinator.get_bulk",
