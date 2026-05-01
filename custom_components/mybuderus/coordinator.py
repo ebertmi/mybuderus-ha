@@ -157,7 +157,7 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._handle_auth_failure()
                 raise
             except UpdateFailed as err:
-                self._record_failure(f"Token refresh failed: {err}")
+                self._record_failure(str(err))
                 raise
 
         try:
