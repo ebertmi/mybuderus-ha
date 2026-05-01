@@ -265,3 +265,75 @@ async def test_outage_issue_not_created_before_threshold(hass, coordinator):
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()
     mock_create.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_success_sets_last_success_at(hass, coordinator):
+    """Successful poll sets _last_success_at."""
+    assert coordinator._last_success_at is None
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(return_value=BULK_DATA),
+    ):
+        await coordinator._async_update_data()
+    assert coordinator._last_success_at is not None
+
+
+@pytest.mark.asyncio
+async def test_success_resets_failure_count(hass, coordinator):
+    """Successful poll resets _consecutive_failures to 0."""
+    coordinator._consecutive_failures = 5
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(return_value=BULK_DATA),
+    ):
+        await coordinator._async_update_data()
+    assert coordinator._consecutive_failures == 0
+
+
+@pytest.mark.asyncio
+async def test_success_clears_outage_issue(hass, coordinator):
+    """Successful poll clears an active outage repair issue."""
+    coordinator._outage_issue_active = True
+    coordinator._consecutive_failures = 12
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(return_value=BULK_DATA),
+    ), patch(
+        "custom_components.mybuderus.coordinator.clear_outage_issue"
+    ) as mock_clear:
+        await coordinator._async_update_data()
+    mock_clear.assert_called_once_with(hass, coordinator._entry.entry_id)
+    assert coordinator._outage_issue_active is False
+
+
+@pytest.mark.asyncio
+async def test_success_logs_recovery(hass, coordinator, caplog):
+    """Recovery after failures is logged at INFO."""
+    import logging
+    coordinator._consecutive_failures = 3
+    with patch(
+        "custom_components.mybuderus.coordinator.get_bulk",
+        new=AsyncMock(return_value=BULK_DATA),
+    ), caplog.at_level(logging.INFO, logger="custom_components.mybuderus.coordinator"):
+        await coordinator._async_update_data()
+    assert any("Recovered after 3" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_auth_failure_clears_outage_issue(hass, coordinator):
+    """Auth failure (ConfigEntryAuthFailed) clears any active outage issue."""
+    coordinator._outage_issue_active = True
+    coordinator._expires_at = time.time() - 10  # expired
+
+    error = aiohttp.ClientResponseError(MagicMock(), MagicMock(), status=401)
+    with patch(
+        "custom_components.mybuderus.coordinator.refresh_access_token",
+        new=AsyncMock(side_effect=error),
+    ), patch(
+        "custom_components.mybuderus.coordinator.clear_outage_issue"
+    ) as mock_clear:
+        with pytest.raises(ConfigEntryAuthFailed):
+            await coordinator._async_update_data()
+    mock_clear.assert_called_once()
+    assert coordinator._outage_issue_active is False
