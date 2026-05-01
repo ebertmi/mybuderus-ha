@@ -1,7 +1,7 @@
 {
   "domain": "mybuderus",
   "name": "myBuderus",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "config_flow": true,
   "documentation": "https://github.com/ebertmi/mybuderus-ha",
   "requirements": [],
@@ -9,5 +9,5 @@
   "codeowners": ["@ebertmi"],
   "issue_tracker": "https://github.com/ebertmi/mybuderus-ha/issues",
   "iot_class": "cloud_polling",
-  "icon": "mdi:heat-pump-outline"
+  "icon": "mdi:heat-pump"
 }
