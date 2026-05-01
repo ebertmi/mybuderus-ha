@@ -40,5 +40,11 @@
         }
       }
     }
+  },
+  "issues": {
+    "api_unavailable": {
+      "title": "myBuderus: API unavailable",
+      "description": "No data has been retrieved since {last_success}. Last error: {last_error}"
+    }
   }
 }

@@ -40,5 +40,11 @@
         }
       }
     }
+  },
+  "issues": {
+    "api_unavailable": {
+      "title": "myBuderus: API nicht erreichbar",
+      "description": "Seit {last_success} wurden keine Daten abgerufen. Letzter Fehler: {last_error}"
+    }
   }
 }
