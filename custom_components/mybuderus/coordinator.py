@@ -1,7 +1,7 @@
 """DataUpdateCoordinator for myBuderus."""
 import logging
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
@@ -80,7 +80,6 @@ class MyBuderusCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _handle_auth_failure(self) -> None:
         """Log auth failure and clear any active outage issue."""
-        from datetime import datetime
         _LOGGER.error(
             "Auth failure — re-auth required (token expired at %s)",
             datetime.fromtimestamp(self._expires_at).strftime("%Y-%m-%d %H:%M"),
