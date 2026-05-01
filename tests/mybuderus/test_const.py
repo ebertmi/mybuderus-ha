@@ -18,3 +18,8 @@ def test_all_sensors_have_resource_path():
 def test_sensor_keys_unique():
     keys = [s.key for s in SENSORS]
     assert len(keys) == len(set(keys))
+
+
+def test_outage_repair_threshold():
+    from custom_components.mybuderus.const import OUTAGE_REPAIR_THRESHOLD
+    assert OUTAGE_REPAIR_THRESHOLD == 3600

@@ -27,6 +27,7 @@ BASE_URL = "https://pointt-api.bosch-thermotechnology.com/pointt-api/api/v1/"
 # Config / Options
 DEFAULT_SCAN_INTERVAL = 300  # seconds
 MIN_SCAN_INTERVAL = 30
+OUTAGE_REPAIR_THRESHOLD = 3600  # seconds of consecutive failure before repair issue fires
 CONF_SCAN_INTERVAL = "scan_interval"
 
 
