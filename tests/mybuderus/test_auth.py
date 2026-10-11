@@ -1,7 +1,7 @@
 """Tests for auth.py."""
 import pytest
 import aiohttp
-from aioresponses import aioresponses
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from custom_components.mybuderus.auth import (
     build_auth_url,
@@ -64,19 +64,18 @@ def test_extract_code_raises_on_url_without_code():
 
 
 @pytest.mark.asyncio
-async def test_exchange_code_returns_token_dict():
-    with aioresponses() as mock:
-        mock.post(
-            TOKEN_ENDPOINT,
-            payload={
-                "access_token": "acc123",
-                "refresh_token": "ref456",
-                "expires_in": 3600,
-                "token_type": "Bearer",
-            },
-        )
-        async with aiohttp.ClientSession() as session:
-            result = await exchange_code(session, "code_abc", "verifier_xyz")
+async def test_exchange_code_returns_token_dict(hass, aioclient_mock):
+    aioclient_mock.post(
+        TOKEN_ENDPOINT,
+        json={
+            "access_token": "acc123",
+            "refresh_token": "ref456",
+            "expires_in": 3600,
+            "token_type": "Bearer",
+        },
+    )
+    session = async_get_clientsession(hass)
+    result = await exchange_code(session, "code_abc", "verifier_xyz")
 
     assert result["access_token"] == "acc123"
     assert result["refresh_token"] == "ref456"
@@ -84,36 +83,33 @@ async def test_exchange_code_returns_token_dict():
 
 
 @pytest.mark.asyncio
-async def test_exchange_code_raises_on_http_error():
-    with aioresponses() as mock:
-        mock.post(TOKEN_ENDPOINT, status=400, payload={"error": "invalid_grant"})
-        async with aiohttp.ClientSession() as session:
-            with pytest.raises(aiohttp.ClientResponseError):
-                await exchange_code(session, "bad_code", "verifier")
+async def test_exchange_code_raises_on_http_error(hass, aioclient_mock):
+    aioclient_mock.post(TOKEN_ENDPOINT, status=400, json={"error": "invalid_grant"})
+    session = async_get_clientsession(hass)
+    with pytest.raises(aiohttp.ClientResponseError):
+        await exchange_code(session, "bad_code", "verifier")
 
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_returns_new_token():
-    with aioresponses() as mock:
-        mock.post(
-            TOKEN_ENDPOINT,
-            payload={
-                "access_token": "new_acc",
-                "refresh_token": "new_ref",
-                "expires_in": 3600,
-            },
-        )
-        async with aiohttp.ClientSession() as session:
-            result = await refresh_access_token(session, "old_refresh")
+async def test_refresh_access_token_returns_new_token(hass, aioclient_mock):
+    aioclient_mock.post(
+        TOKEN_ENDPOINT,
+        json={
+            "access_token": "new_acc",
+            "refresh_token": "new_ref",
+            "expires_in": 3600,
+        },
+    )
+    session = async_get_clientsession(hass)
+    result = await refresh_access_token(session, "old_refresh")
 
     assert result["access_token"] == "new_acc"
 
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_raises_on_401():
-    with aioresponses() as mock:
-        mock.post(TOKEN_ENDPOINT, status=401, payload={"error": "invalid_token"})
-        async with aiohttp.ClientSession() as session:
-            with pytest.raises(aiohttp.ClientResponseError) as exc_info:
-                await refresh_access_token(session, "expired_refresh")
+async def test_refresh_access_token_raises_on_401(hass, aioclient_mock):
+    aioclient_mock.post(TOKEN_ENDPOINT, status=401, json={"error": "invalid_token"})
+    session = async_get_clientsession(hass)
+    with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+        await refresh_access_token(session, "expired_refresh")
     assert exc_info.value.status == 401

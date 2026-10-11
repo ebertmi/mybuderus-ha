@@ -1,7 +1,7 @@
 """Tests for api.py."""
 import pytest
 import aiohttp
-from aioresponses import aioresponses
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from custom_components.mybuderus.api import _extract_value, get_bulk, get_gateways
 from custom_components.mybuderus.const import BASE_URL
@@ -51,25 +51,23 @@ def test_extract_value_none_payload():
 # --- get_gateways ---
 
 @pytest.mark.asyncio
-async def test_get_gateways_returns_list():
-    with aioresponses() as mock:
-        mock.get(
-            GATEWAYS_URL,
-            payload=[{"deviceId": "101739215", "deviceType": "MX300"}],
-        )
-        async with aiohttp.ClientSession() as session:
-            result = await get_gateways(session, "fake_token")
+async def test_get_gateways_returns_list(hass, aioclient_mock):
+    aioclient_mock.get(
+        GATEWAYS_URL,
+        json=[{"deviceId": "101739215", "deviceType": "MX300"}],
+    )
+    session = async_get_clientsession(hass)
+    result = await get_gateways(session, "fake_token")
 
     assert result == [{"deviceId": "101739215", "deviceType": "MX300"}]
 
 
 @pytest.mark.asyncio
-async def test_get_gateways_raises_on_401():
-    with aioresponses() as mock:
-        mock.get(GATEWAYS_URL, status=401)
-        async with aiohttp.ClientSession() as session:
-            with pytest.raises(aiohttp.ClientResponseError) as exc_info:
-                await get_gateways(session, "bad_token")
+async def test_get_gateways_raises_on_401(hass, aioclient_mock):
+    aioclient_mock.get(GATEWAYS_URL, status=401)
+    session = async_get_clientsession(hass)
+    with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+        await get_gateways(session, "bad_token")
     assert exc_info.value.status == 401
 
 
@@ -127,50 +125,45 @@ BULK_RESPONSE = [
 
 
 @pytest.mark.asyncio
-async def test_get_bulk_extracts_string_value():
-    with aioresponses() as mock:
-        mock.post(BULK_URL, payload=BULK_RESPONSE)
-        async with aiohttp.ClientSession() as session:
-            result = await get_bulk(session, "token", "101739215")
+async def test_get_bulk_extracts_string_value(hass, aioclient_mock):
+    aioclient_mock.post(BULK_URL, json=BULK_RESPONSE)
+    session = async_get_clientsession(hass)
+    result = await get_bulk(session, "token", "101739215")
 
     assert result["/heatingCircuits/hc1/operationMode"] == "manual"
 
 
 @pytest.mark.asyncio
-async def test_get_bulk_extracts_float_value():
-    with aioresponses() as mock:
-        mock.post(BULK_URL, payload=BULK_RESPONSE)
-        async with aiohttp.ClientSession() as session:
-            result = await get_bulk(session, "token", "101739215")
+async def test_get_bulk_extracts_float_value(hass, aioclient_mock):
+    aioclient_mock.post(BULK_URL, json=BULK_RESPONSE)
+    session = async_get_clientsession(hass)
+    result = await get_bulk(session, "token", "101739215")
 
     assert result["/heatSources/returnTemperature"] == 45.4
 
 
 @pytest.mark.asyncio
-async def test_get_bulk_sentinel_becomes_none():
-    with aioresponses() as mock:
-        mock.post(BULK_URL, payload=BULK_RESPONSE)
-        async with aiohttp.ClientSession() as session:
-            result = await get_bulk(session, "token", "101739215")
+async def test_get_bulk_sentinel_becomes_none(hass, aioclient_mock):
+    aioclient_mock.post(BULK_URL, json=BULK_RESPONSE)
+    session = async_get_clientsession(hass)
+    result = await get_bulk(session, "token", "101739215")
 
     assert result["/heatingCircuits/hc1/roomtemperature"] is None
 
 
 @pytest.mark.asyncio
-async def test_get_bulk_null_payload_becomes_none():
-    with aioresponses() as mock:
-        mock.post(BULK_URL, payload=BULK_RESPONSE)
-        async with aiohttp.ClientSession() as session:
-            result = await get_bulk(session, "token", "101739215")
+async def test_get_bulk_null_payload_becomes_none(hass, aioclient_mock):
+    aioclient_mock.post(BULK_URL, json=BULK_RESPONSE)
+    session = async_get_clientsession(hass)
+    result = await get_bulk(session, "token", "101739215")
 
     assert result["/system/seasonOptimizer/mode"] is None
 
 
 @pytest.mark.asyncio
-async def test_get_bulk_403_path_becomes_none():
-    with aioresponses() as mock:
-        mock.post(BULK_URL, payload=BULK_RESPONSE)
-        async with aiohttp.ClientSession() as session:
-            result = await get_bulk(session, "token", "101739215")
+async def test_get_bulk_403_path_becomes_none(hass, aioclient_mock):
+    aioclient_mock.post(BULK_URL, json=BULK_RESPONSE)
+    session = async_get_clientsession(hass)
+    result = await get_bulk(session, "token", "101739215")
 
     assert result["/dhwCircuits/dhw1/actualStorageTemperature"] is None
